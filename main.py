@@ -21,8 +21,6 @@ motivation_en = ["You should always start with what makes you doubt",
                 "Small steps are always a way forward.",
                 "Mistakes are part of the journey ",
                 "You can do it! I believe in you. Love u❤️️ "]
-today_motivation_uk = motivation_uk[random.randint(0,4)]
-today_motivation_en = motivation_en[random.randint(0,4)]
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_user.id
@@ -62,7 +60,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await asyncio.sleep(3600)
 
             await context.bot.send_message(chat_id= chat_id,
-                                      text=f"{today_motivation_uk}")
+                                      text=f"{random.choice(motivation_uk)}")
         elif day_left == 0:
             await context.bot.send_message(chat_id= chat_id,
                                       text="Сьогодні НМТ, бажаю успіху! Ти складеш всі 4 предмети на 200!!")
@@ -76,7 +74,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await asyncio.sleep(3600)
 
             await context.bot.send_message(chat_id= chat_id,
-                                      text=f"{today_motivation_en}")
+                                      text=f"{random.choice(motivation_en)}")
         elif day_left == 0:
             await context.bot.send_message(chat_id= chat_id,
                                       text="Today is the NMT, good luck! You will get 200 on all 4 subjects!!")
