@@ -1,14 +1,11 @@
-from telegram import Bot
+from zoneinfo import ZoneInfo
 from datetime import date
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 import asyncio
 import random
 from bot_token import BOT_TOKEN
-
-
-admin_id = 1056631703
-
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 motivation_uk = ["Починати завжди варто з того, що сіє сумніви.",
                 "Найскладніше - почати.",
@@ -29,8 +26,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         file.seek(0)
         users = file.read().splitlines()
         if str(chat_id) not in users:
-            file.write(str(chat_id) + "\n")
-
+            file.write(str(chat_id) + " \n ")
     user = update.effective_user
     lang = user.language_code
     today = date.today()
@@ -57,7 +53,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if day_left > 0:
             await context.bot.send_message(chat_id= chat_id,
                                       text=f"До нмт лишилось {day_left} {day_word_uk(day_left)}")
-            await asyncio.sleep(3600)
+            await asyncio.sleep(1)
 
             await context.bot.send_message(chat_id= chat_id,
                                       text=f"{random.choice(motivation_uk)}")
@@ -71,7 +67,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if day_left > 0:
             await context.bot.send_message(chat_id= chat_id,
                                       text=f"{day_left} {day_word_en(day_left)} left until the NMT")
-            await asyncio.sleep(3600)
+            await asyncio.sleep(1)
 
             await context.bot.send_message(chat_id= chat_id,
                                       text=f"{random.choice(motivation_en)}")
@@ -82,6 +78,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await context.bot.send_message(chat_id= chat_id,
                                       text="This is my last message, I wish you success with your admission :D")
 if __name__ == '__main__':
+
     app = ApplicationBuilder().token(BOT_TOKEN).build()
+    time_Kyiv = AsyncIOScheduler(timezone=ZoneInfo("Europe/Kyiv"))
+    time_Kyiv.start()
     app.add_handler(CommandHandler("start", start))
     app.run_polling()
