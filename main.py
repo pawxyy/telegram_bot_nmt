@@ -1,23 +1,19 @@
-from datetime import date, time
-from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 import asyncio
-import random
-import pytz
+from datetime import datetime, date, time
+from aiogram import Bot, Dispatcher, F
+from aiogram.types import Message
+from aiogram.filters import Command
+from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.fsm.context import FSMContext
 from bot_token import BOT_TOKEN
+import pytz
 
-motivation_uk = ["Починати завжди варто з того, що сіє сумніви.",
-                "Найскладніше - почати.",
-                "Маленькі кроки теж рух вперед.",
-                "Помилки - частина шляху.",
-                "Ти зможеш! Вірю в тебе. Люблю❤️"]
+token = BOT_TOKEN
+bot = Bot(token=token)
+dp = Dispatcher(storage=MemoryStorage())
 
-motivation_en = ["You should always start with what makes you doubt",
-                "The hardest part is starting",
-                "Small steps are always a way forward.",
-                "Mistakes are part of the journey ",
-                "You can do it! I believe in you. Love u❤️️ "]
-
+kyiv_time = pytz.timezone("Europe/Kyiv")
+job_time = time(hour=10, minute=0, tzinfo=kyiv_time)
 
 def day_word_uk(n):
     if 11 <= n % 100 <= 14:
@@ -29,83 +25,43 @@ def day_word_uk(n):
     else:
         return "днів"
 
+@dp.message(Command("start"))
+async def start(message: Message):
+    user_id = str(message.from_user.id)
+    with open("user_id.txt", 'r') as f:
+        content = f.read()
+    if str(user_id) not in content:
+        with open("user_id.txt", 'a') as f:
+            f.write(f'{user_id}\n')
+    await message.answer(f"Привіт, я твій бот до нмт! Коли ти складаєш нмт? Напиши це у форматі yyyy-mm-dd")
 
-def day_word_en(n):
-    if n > 1:
-        return "days"
-    else:
-        return "day"
-
-nmt = date(2026, 6, 1)
-
-def get_days_left():
-    today = date.today()
-    return (nmt - today).days
+@dp.message(Command("change_date"))
+async def change_date(message: Message):
+    await message.answer(f"Добре! Напиши нову дату складання НМТ форматі yyyy-mm-dd")
 
 def load_users():
     with open("user_id.txt", "r") as f:
         return [int(line.strip()) for line in f]
 
-async def send_daily_message(context: ContextTypes.DEFAULT_TYPE):
-    users = load_users()
-    day_left = get_days_left()
-    for user_id in users:
-        try:
-            if day_left > 0:
-                await context.bot.send_message(chat_id=user_id,
-                                               text=f"До нмт лишилось {day_left} {day_word_uk(day_left)}")
-                await asyncio.sleep(1)
+@dp.message(F.text)
+async def count_day(message: Message):
+    try:
+        user_date = datetime.strptime(message.text, "%Y-%m-%d").date()
+        today = date.today()
+        days_left = (user_date - today).days
 
-                await context.bot.send_message(chat_id=user_id,
-                                               text=f"{random.choice(motivation_uk)}")
-            elif day_left == 0:
-                await context.bot.send_message(chat_id=user_id,
-                                               text="Сьогодні НМТ, бажаю успіху! Ти складеш всі 4 предмети на 200!!")
-            else:
-                await context.bot.send_message(chat_id=user_id,
-                                               text="Це моє останнє повідомлення, бажаю успіхів зі вступом :D")
-        except Exception as e:
-            print(f"Ошибка с {user_id}: {e}")
-
-kyiv_time = pytz.timezone("Europe/Kyiv")
-job_time = time(hour=16, minute=14, tzinfo=kyiv_time)
-
-
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chat_id = update.effective_user.id
-    user = update.effective_user
-    lang = user.language_code
-    day_left = get_days_left()
-    if lang == "uk":
-        if day_left > 0:
-            await context.bot.send_message(chat_id= chat_id,
-                                      text=f"До нмт лишилось {day_left} {day_word_uk(day_left)}")
-            await asyncio.sleep(1)
-
-            await context.bot.send_message(chat_id= chat_id,
-                                      text=f"{random.choice(motivation_uk)}")
-        elif day_left == 0:
-            await context.bot.send_message(chat_id= chat_id,
-                                      text="Сьогодні НМТ, бажаю успіху! Ти складеш всі 4 предмети на 200!!")
+        if days_left > 0:
+            await message.reply(f"До НМТ залишилось {days_left} {day_word_uk(days_left)}")
+        elif days_left == 0:
+            await message.reply(f"Сьогодні НМТ!! Бажаю іспіхів!!")
         else:
-            await context.bot.send_message(chat_id= chat_id,
-                                      text="Це моє останнє повідомлення, бажаю успіхів зі вступом :D")
-    elif lang == "en":
-        if day_left > 0:
-            await context.bot.send_message(chat_id= chat_id,
-                                      text=f"{day_left} {day_word_en(day_left)} left until the NMT")
-            await asyncio.sleep(1)
+            await message.reply(f"Найскладніше вже позаду!! Я тебе вітаю!")
 
-            await context.bot.send_message(chat_id= chat_id,
-                                      text=f"{random.choice(motivation_en)}")
-        elif day_left == 0:
-            await context.bot.send_message(chat_id= chat_id,
-                                      text="Today is the NMT, good luck! You will get 200 on all 4 subjects!!")
-        else:
-            await context.bot.send_message(chat_id= chat_id,
-                                      text="This is my last message, I wish you success with your admission :D")
-if __name__ == '__main__':
+    except ValueError:
+        await message.reply(f"Не той формат дати!! Спробуй yyyy-mm-dd")
 
-    app = ApplicationBuilder().token(BOT_TOKEN).build()
-    app.job_queue.run_daily(send_daily_message, time=job_time)
-    app.run_polling()
+async def main():
+    await dp.start_polling(bot)
+
+if __name__ == "__main__":
+    asyncio.run(main())
