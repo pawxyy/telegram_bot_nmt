@@ -27,17 +27,12 @@ def day_word_uk(n):
 
 @dp.message(Command("start"))
 async def start(message: Message):
-    user_id = str(message.from_user.id)
-    with open("user_id.txt", 'r') as f:
-        content = f.read()
-    if str(user_id) not in content:
-        with open("user_id.txt", 'a') as f:
-            f.write(f'{user_id}\n')
     await message.answer(f"Привіт, я твій бот до нмт! Коли ти складаєш нмт? Напиши це у форматі yyyy-mm-dd")
 
 @dp.message(Command("change_date"))
 async def change_date(message: Message):
     await message.answer(f"Добре! Напиши нову дату складання НМТ форматі yyyy-mm-dd")
+
 
 def load_users():
     with open("user_id.txt", "r") as f:
@@ -59,6 +54,26 @@ async def count_day(message: Message):
 
     except ValueError:
         await message.reply(f"Не той формат дати!! Спробуй yyyy-mm-dd")
+
+    user_id = str(message.from_user.id)
+    user_date_exam = f"{user_id}:{message.text}\n"
+    try:
+        with open("user_id.txt", 'r') as f:
+            lines = f.readlines()
+    except FileNotFoundError:
+        lines = []
+    new_lines = []
+    found = False
+    for line in lines:
+        if line.startswith(user_id + ":"):
+            new_lines.append(user_date_exam)
+            found = True
+        else:
+            new_lines.append(line)
+    if not found:
+        new_lines.append(user_date_exam)
+    with open("user_id.txt", 'w') as f:
+        f.writelines(new_lines)
 
 async def main():
     await dp.start_polling(bot)
