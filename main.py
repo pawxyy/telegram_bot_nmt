@@ -4,7 +4,7 @@ from aiogram import Bot, Dispatcher, F
 from aiogram.types import Message
 from aiogram.filters import Command
 from aiogram.fsm.storage.memory import MemoryStorage
-from aiogram.fsm.context import FSMContext
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from bot_token import BOT_TOKEN
 import pytz
 
@@ -12,8 +12,7 @@ token = BOT_TOKEN
 bot = Bot(token=token)
 dp = Dispatcher(storage=MemoryStorage())
 
-kyiv_time = pytz.timezone("Europe/Kyiv")
-job_time = time(hour=10, minute=0, tzinfo=kyiv_time)
+scheduler = AsyncIOScheduler(timezone="Europe/Kyiv")
 
 def day_word_uk(n):
     if 11 <= n % 100 <= 14:
@@ -33,6 +32,21 @@ async def start(message: Message):
 async def change_date(message: Message):
     await message.answer(f"Добре! Напиши нову дату складання НМТ форматі yyyy-mm-dd")
 
+async def send_daily():
+    with open("user_id.txt", 'r') as f:
+        lines = f.readlines()
+    today = date.today()
+    for line in lines:
+        user_id, user_date = line.strip().split(":")
+        user_date = datetime.strptime(user_date, "%Y-%m-%d").date()
+        days_left = (user_date - today).days
+        if days_left > 0:
+            await bot.send_message(chat_id=user_id, text = f"Нагадювання! До НМТ залишилось {days_left} {day_word_uk(days_left)}")
+        elif days_left == 0:
+            await bot.send_message(chat_id=user_id, text = "Сьогодні НМТ!! Бажаю успіхів!!")
+        else:
+            await bot.send_message(chat_id=user_id, text = "Найскладніше вже позаду!! Я тебе вітаю!")
+
 
 def load_users():
     with open("user_id.txt", "r") as f:
@@ -44,16 +58,16 @@ async def count_day(message: Message):
         user_date = datetime.strptime(message.text, "%Y-%m-%d").date()
         today = date.today()
         days_left = (user_date - today).days
-
         if days_left > 0:
-            await message.reply(f"До НМТ залишилось {days_left} {day_word_uk(days_left)}")
+                await message.reply(f"До НМТ залишилось {days_left} {day_word_uk(days_left)}")
         elif days_left == 0:
             await message.reply(f"Сьогодні НМТ!! Бажаю іспіхів!!")
         else:
             await message.reply(f"Найскладніше вже позаду!! Я тебе вітаю!")
-
     except ValueError:
         await message.reply(f"Не той формат дати!! Спробуй yyyy-mm-dd")
+
+
 
     user_id = str(message.from_user.id)
     user_date_exam = f"{user_id}:{message.text}\n"
@@ -62,6 +76,7 @@ async def count_day(message: Message):
             lines = f.readlines()
     except FileNotFoundError:
         lines = []
+
     new_lines = []
     found = False
     for line in lines:
@@ -76,6 +91,8 @@ async def count_day(message: Message):
         f.writelines(new_lines)
 
 async def main():
+    scheduler.add_job(send_daily, "cron", hour=10, minute=0)
+    scheduler.start()
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
