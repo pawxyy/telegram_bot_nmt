@@ -57,13 +57,13 @@ async def count_day(message: Message):
     try:
         user_date = datetime.strptime(message.text, "%Y-%m-%d").date()
         today = date.today()
+        if user_date<today:
+            await message.reply("Ця дата вже минула! Обери іншу")
         days_left = (user_date - today).days
         if days_left > 0:
                 await message.reply(f"До НМТ залишилось {days_left} {day_word_uk(days_left)}")
         elif days_left == 0:
             await message.reply(f"Сьогодні НМТ!! Бажаю іспіхів!!")
-        else:
-            await message.reply(f"Найскладніше вже позаду!! Я тебе вітаю!")
     except ValueError:
         await message.reply(f"Не той формат дати!! Спробуй yyyy-mm-dd")
 
