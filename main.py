@@ -26,11 +26,11 @@ def day_word_uk(n):
 
 @dp.message(Command("start"))
 async def start(message: Message):
-    await message.answer(f"Привіт, я твій бот до нмт! Коли ти складаєш нмт? Напиши це у форматі yyyy-mm-dd")
+    await message.answer(f"Привіт, я твій бот до нмт!<tg-emoji emoji-id='5458904472598095631'>👋</tg-emoji> \nКоли ти складаєш нмт? Напиши це у форматі yyyy-mm-dd ", parse_mode="HTML")
 
 @dp.message(Command("change_date"))
 async def change_date(message: Message):
-    await message.answer(f"Добре! Напиши нову дату складання НМТ форматі yyyy-mm-dd")
+    await message.answer(f"Добре! Напиши нову дату складання НМТ форматі yyyy-mm-dd <tg-emoji emoji-id='5449875850046481967'>🤔</tg-emoji>", parse_mode="HTML")
 
 async def send_daily():
     with open("user_id.txt", 'r') as f:
@@ -41,11 +41,9 @@ async def send_daily():
         user_date = datetime.strptime(user_date, "%Y-%m-%d").date()
         days_left = (user_date - today).days
         if days_left > 0:
-            await bot.send_message(chat_id=user_id, text = f"Нагадювання! До НМТ залишилось {days_left} {day_word_uk(days_left)}")
+            await bot.send_message(chat_id=user_id, text = f"Нагадювання! До НМТ залишилось {days_left} {day_word_uk(days_left)}<tg-emoji emoji-id='5303081830738571591'>🤧</tg-emoji>", parse_mode="HTML")
         elif days_left == 0:
-            await bot.send_message(chat_id=user_id, text = "Сьогодні НМТ!! Бажаю успіхів!!")
-        else:
-            await bot.send_message(chat_id=user_id, text = "Найскладніше вже позаду!! Я тебе вітаю!")
+            await bot.send_message(chat_id=user_id, text = "Сьогодні НМТ!! Бажаю успіхів!!<tg-emoji emoji-id='5456149049214249060'>🥰</tg-emoji><tg-emoji emoji-id='5458696196749008675'>😍</tg-emoji>", parse_mode="HTML")
 
 
 def load_users():
@@ -58,14 +56,14 @@ async def count_day(message: Message):
         user_date = datetime.strptime(message.text, "%Y-%m-%d").date()
         today = date.today()
         if user_date<today:
-            await message.reply("Ця дата вже минула! Обери іншу")
+            await message.reply("Ця дата вже минула!<tg-emoji emoji-id='5334549028891796220'>😠</tg-emoji> Обери іншу", parse_mode="HTML")
         days_left = (user_date - today).days
         if days_left > 0:
-                await message.reply(f"До НМТ залишилось {days_left} {day_word_uk(days_left)}")
+                await message.reply(f"До НМТ залишилось {days_left} {day_word_uk(days_left)}<tg-emoji emoji-id='5303081830738571591'>🤧</tg-emoji>", parse_mode="HTML")
         elif days_left == 0:
-            await message.reply(f"Сьогодні НМТ!! Бажаю іспіхів!!")
+            await message.reply(f"Сьогодні НМТ!! Бажаю успіхів!!<tg-emoji emoji-id='5456149049214249060'>🥰</tg-emoji><tg-emoji emoji-id='5458696196749008675'>😍</tg-emoji>", parse_mode="HTML")
     except ValueError:
-        await message.reply(f"Не той формат дати!! Спробуй yyyy-mm-dd")
+        await message.reply(f"Не той формат дати!!<tg-emoji emoji-id='5226962730941955595'>🙄</tg-emoji> Спробуй yyyy-mm-dd", parse_mode="HTML")
 
 
 
@@ -91,7 +89,7 @@ async def count_day(message: Message):
         f.writelines(new_lines)
 
 async def main():
-    scheduler.add_job(send_daily, "cron", hour=10, minute=0)
+    scheduler.add_job(send_daily, "cron", hour=10, minute=20)
     scheduler.start()
     await dp.start_polling(bot)
 
